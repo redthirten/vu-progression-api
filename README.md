@@ -19,15 +19,11 @@ Built with **Node.js**, **Express**, and **MySQL**, it provides structured endpo
 - 🛡️ Token & Server GUID based security — Only authorized servers can POST new data
 - 📜 Structured logging to file (rotated daily) for easy auditing
 
----
-
 ## Requirements
 
 - [Node.js](https://nodejs.org/) (v18+ recommended)  
 - [MySQL](https://dev.mysql.com/) (5.7+ or MariaDB)  
 - [VU](https://veniceunleashed.net/) server(s) with [vu-progression](https://github.com/thysw95/vu-progression) mod installed (optional, but intended use-case)
-
----
 
 ## Setup & Deployment
 
@@ -74,25 +70,19 @@ npm run add-server
 npm start
 ```
 API should now be available at:
-```http
+```
 http://localhost:3000
 ```
-
----
 
 ## Usage
 
 Clients of the API are intended to be individual VU servers running the vu-progression mod, but additional client opportunities are possible (like websites, bots, etc.). API endpoints will be detailed in the Wiki soon.
 
----
-
 ## Roadmap
-- [] More granular read/write endpoints for player progression
-- [] Make Wiki to detail endpoints
-- [] Add more tracked data (req. addl. mod development)
-- [] Administration endpoints for managing authorized servers / automated token generation
-
----
+- [ ] More granular read/write endpoints for player progression
+- [ ] Make Wiki to detail endpoints
+- [ ] Add more tracked data (req. addl. mod development)
+- [ ] Administration endpoints for managing authorized servers / automated token generation
 
 ## Development
 Start in dev mode with auto-reload:
@@ -128,8 +118,6 @@ curl -X POST localhost:3000/players/[guid] \
             "vehicle_progression": "Jets,101"
         }'
 ```
-
----
 
 ## License
 GNU AGPLv3. See [LICENSE](./LICENSE) for details.
