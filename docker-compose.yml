@@ -1,0 +1,46 @@
+services:
+  api:
+    image: ghcr.io/redthirten/vu-progression-api:main
+    container_name: vu-progression-api
+    restart: unless-stopped
+    env_file: .env # Use .env file on host; see .env.example in project for values
+      # Use `stack.env` if using Portainer
+    ports:
+      - "3000:3000" # host:container
+    depends_on:
+      - db
+    networks:
+      - vu_network
+    volumes:
+      - /path/to/save/logs:/usr/src/app/logs # Optional
+    # Optional Traefik reverse proxy label examples
+      # If using, comment out `ports` flag above, set `networks` to Traefik network,
+      # and set `TRUSTED_PROXIES` env var appropriately.
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.vu-progression-secure.entrypoints=https"
+    #   - "traefik.http.routers.vu-progression-secure.rule=Host(`${API_DOMAIN}`)"
+    #   - "traefik.http.routers.vu-progression-secure.tls=true"
+    #   - "traefik.http.routers.vu-progression-secure.service=vu-progression"
+    #   - "traefik.http.services.vu-progression.loadbalancer.server.port=3000"
+
+  db:
+    # Lock version because MariaDB is not guaranteed to be forward compatible
+    image: mariadb:12.0.2
+    container_name: vu-progression-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - vu_network
+
+networks:
+  vu_network:
+
+volumes:
+  db_data:
