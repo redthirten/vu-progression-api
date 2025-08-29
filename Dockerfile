@@ -1,3 +1,9 @@
+LABEL maintainer="David Wolfe (Red-Thirten)"
+LABEL version="0.1.0"
+LABEL description="VU Progression API Docker image"
+LABEL org.opencontainers.image.source="https://github.com/redthirten/vu-progression-api"
+LABEL org.opencontainers.image.license="AGPL-3.0-or-later"
+
 # Use an official Node.js runtime as the base image
 FROM node:22-alpine
 
