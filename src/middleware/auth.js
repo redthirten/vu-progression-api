@@ -9,6 +9,7 @@ export const authCheck = async (req, res, next) => {
     if (!token || !serverGuid) {
         return res.status(401).json({ error: "Missing required auth headers" });
     }
+    const serverGuidSimple = serverGuid.replace(/-/g, "").toLowerCase();
     
     try {
         const [rows] = await db.query(
@@ -23,8 +24,8 @@ export const authCheck = async (req, res, next) => {
             logger.warn(`Rejected query from ${rows[0].owner_name} with disabled token:\n\t${token}`);
             return res.status(403).json({ error: "Disabled API token" });
         }
-        if (rows[0].server_guid !== serverGuid) {
-            logger.warn(`Rejected query from server ${serverGuid} with mismatching token:\n\t${token}`);
+        if (rows[0].server_guid !== serverGuidSimple) {
+            logger.warn(`Rejected query from server ${serverGuidSimple} with mismatching token:\n\t${token}`);
             return res.status(403).json({ error: "API token not authorized for use with this server" });
         }
         req.ownerName = rows[0].owner_name;
