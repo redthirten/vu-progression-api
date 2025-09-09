@@ -55,7 +55,7 @@ playerRouter.use(async (req, res, next) => {
 playerRouter.get("/", (req, res) => {
     if (!req.player) {
         logger.info(`${req.ownerName} (${req.serverGUID}) requested non-existent player progression for GUID: ${req.params.guid}`);
-        return res.status(204).json({});
+        return res.status(204).json({}); // No Content
     }
     
     logger.info(`${req.ownerName} (${req.serverGUID}) requested player progression for: ${req.player.name}`);
@@ -82,6 +82,7 @@ playerRouter.post("/", async (req, res) => {
                 logger.warn(`${req.ownerName} (${req.serverGUID}) tried updating ${existingPlayer.name} with old data. Skipping.`);
                 return res.status(400).json({ error: "Outdated data" });
             }
+            // TODO: Check for sus score increase
             const sql = `
                 UPDATE player_progression
                 SET

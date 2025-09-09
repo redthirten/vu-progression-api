@@ -25,7 +25,7 @@ export const authCheck = async (req, res, next) => {
             return res.status(403).json({ error: "Disabled API token" });
         }
         if (rows[0].server_guid !== serverGuidSimple) {
-            logger.warn(`Rejected query from server ${serverGuidSimple} with mismatching token:\n\t${token}`);
+            logger.warn(`Rejected query from server (${serverGuidSimple}) with mismatching token:\n\t${token}`);
             return res.status(403).json({ error: "API token not authorized for use with this server" });
         }
         req.ownerName = rows[0].owner_name;
