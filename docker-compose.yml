@@ -3,7 +3,7 @@ services:
     image: ghcr.io/redthirten/vu-progression-api:main
     container_name: vu-progression-api
     restart: unless-stopped
-    env_file: .env # Use .env file on host; see .env.example in project for values
+    env_file: .env # Uses .env file on host; see .env.example in project for values
       # Use `stack.env` if using Portainer
     ports:
       - "3000:3000" # host:container
@@ -34,13 +34,13 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
-    volumes:
-      - db_data:/var/lib/mysql
     networks:
       - vu_network
-
-networks:
-  vu_network:
+    volumes:
+      - db_data:/var/lib/mysql
 
 volumes:
   db_data:
+
+networks:
+  vu_network:

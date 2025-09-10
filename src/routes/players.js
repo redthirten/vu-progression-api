@@ -70,7 +70,7 @@ playerRouter.get("/", (req, res) => {
 *   - 400 Bad Request: Missing or outdated data
 */
 playerRouter.post("/", async (req, res) => {
-    if (!req.body || !req.body.guid) {
+    if (!req.body || !req.body.name) {
         return res.status(400).json({ error: "Missing body JSON data" });
     }
     
@@ -119,10 +119,14 @@ playerRouter.post("/", async (req, res) => {
                     req.body.recon_xp,
                     req.body.weapon_progression,
                     req.body.vehicle_progression,
-                    req.body.guid
+                    req.params.guid
                 ]
             );
             logger.info(`${req.ownerName} (${req.serverGUID}) updated player progression for: ${existingPlayer.name}`);
+            res.json({
+                success: true,
+                newPlayer: false
+            });
         } else {
             const sql = `
                 INSERT INTO player_progression (
@@ -149,7 +153,7 @@ playerRouter.post("/", async (req, res) => {
                 sql,
                 [
                     req.body.name,
-                    req.body.guid,
+                    req.params.guid,
                     req.body.kills,
                     req.body.deaths,
                     req.body.total_level,
@@ -167,8 +171,11 @@ playerRouter.post("/", async (req, res) => {
                 ]
             );
             logger.info(`${req.ownerName} (${req.serverGUID}) added player progression for: ${req.body.name}`);
+            res.json({
+                success: true,
+                newPlayer: true
+            });
         }
-        res.json({ success: true });
     } catch (err) {
         logger.error(err);
         res.status(500).json({ error: "Database error" });
