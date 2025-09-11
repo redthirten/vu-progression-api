@@ -6,7 +6,7 @@ services:
     env_file: .env # Uses .env file on host; see .env.example in project for values
       # Use `stack.env` if using Portainer
     ports:
-      - "3000:3000" # host:container
+      - 3000:3000 # host:container
     depends_on:
       - db
     networks:
@@ -29,15 +29,15 @@ services:
     image: mariadb:12.0.2
     container_name: vu-progression-db
     restart: unless-stopped
+    networks:
+      - vu_network
+    volumes:
+      - db_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
-    networks:
-      - vu_network
-    volumes:
-      - db_data:/var/lib/mysql
 
 volumes:
   db_data:

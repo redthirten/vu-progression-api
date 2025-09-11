@@ -16,7 +16,7 @@ playersRouter.get("/", async (req, res) => {
         const [rows] = await db.query(
             "SELECT COUNT(*) AS count FROM player_progression"
         );
-        res.json(rows);
+        res.json(rows[0]);
     } catch (err) {
         logger.error(err);
         return res.status(500).json({ error: "Database error" });

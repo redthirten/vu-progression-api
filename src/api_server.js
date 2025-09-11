@@ -19,6 +19,7 @@
 import 'dotenv/config';
 import express from 'express';
 import db from "#db";
+import logger from '#utils/logger.js';
 import { errorHandler } from "#middleware/errorHandler.js";
 import { rootRouter } from "#routes/index.js";
 import { authRouter } from "#routes/auth.js";
@@ -40,22 +41,22 @@ app.use(errorHandler);
 
 
 // Start server
-console.log("Starting API service...")
+logger.debug("Starting API HTTP server...")
 if (process.env.TRUSTED_PROXIES) { // Trust proxies if defined
-    console.log(`Trusting proxies: ${process.env.TRUSTED_PROXIES}`);
+    logger.debug(`Trusting proxies: ${process.env.TRUSTED_PROXIES}`);
     app.set("trust proxy", process.env.TRUSTED_PROXIES);
 }
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
-    console.log(`API running on port ${PORT}`);
+    logger.success(`API running on port ${PORT}`);
 });
 
 // Cleanup on shutdown
 const shutdown = async () => {
-    console.log("Shutting down...");
+    logger.debug("Shutting down API...");
     await db.end(); // Close all MySQL connections
     server.close(() => {
-        console.log("HTTP server closed.");
+        logger.success("API HTTP server closed.");
         process.exit(0);
     });
 };

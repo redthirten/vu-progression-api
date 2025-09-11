@@ -1,4 +1,5 @@
 import express from "express";
+import logger from '#utils/logger.js';
 import { createRequire } from "module";
 
 const MIN_MOD_VERSION = {
@@ -15,7 +16,7 @@ const {
     description: appDesc,
     repository: appRepo
 } = require("#package");
-console.log(`VU Progression API (v${appVer})`);
+logger.debug(`VU Progression API (v${appVer})`);
 
 
 export const rootRouter = express.Router();

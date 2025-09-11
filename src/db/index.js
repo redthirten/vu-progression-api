@@ -1,8 +1,8 @@
 import mysql from "mysql2/promise";
+import logger from '#utils/logger.js';
 
 
 // MySQL connection pool
-console.log("Logging into database...")
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 3306,
@@ -16,6 +16,7 @@ const pool = mysql.createPool({
 export default pool;
 
 const initDB = async () => {
+    logger.debug(`Logging into database at '${process.env.DB_HOST + ":" + (process.env.DB_PORT || 3306)}'...`)
     // Ensure tables exist
     try {
         await pool.query(
@@ -50,7 +51,7 @@ const initDB = async () => {
             )`
         );
     } catch (err) {
-        console.error("❌ Failed to initialize DB tables:", err);
+        logger.error("Failed to initialize DB tables:", err);
         process.exit(1); // stop app if DB can't be initialized
     }
 };
