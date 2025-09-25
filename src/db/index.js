@@ -45,6 +45,7 @@ const initDB = async () => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 owner_name TINYTEXT NOT NULL,
                 owner_contact TINYTEXT DEFAULT NULL,
+                last_ip VARCHAR(45) DEFAULT NULL,
                 server_guid CHAR(32) NOT NULL,
                 token CHAR(64) NOT NULL,
                 enabled BOOLEAN NOT NULL DEFAULT TRUE

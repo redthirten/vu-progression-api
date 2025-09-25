@@ -24,6 +24,7 @@ import { errorHandler } from "#middleware/errorHandler.js";
 import { rootRouter } from "#routes/index.js";
 import { authRouter } from "#routes/auth.js";
 import { playersRouter } from "#routes/players.js";
+import { serversRouter } from "#routes/servers.js";
 
 
 const app = express();
@@ -35,6 +36,7 @@ app.use(express.json());
 app.use("/", rootRouter);
 app.use("/auth", authRouter);
 app.use("/players", playersRouter);
+app.use("/servers", serversRouter);
 
 // Error handler middleware (must be last)
 app.use(errorHandler);

@@ -1,13 +1,22 @@
 {
   "name": "vu-progression-api",
-  "version": "0.1.1",
-  "description": "External API server for collecting and providing global player progression data for Venice Unleashed's vu-progression mod.",
+  "version": "0.1.2",
+  "description": "External API server for collecting and providing global player progression data for Venice Unleashed's vu-progression mod. All responses and bodies are formatted as JSON.",
   "author": "David Wolfe (Red-Thirten)",
   "contributors": [],
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "https://github.com/redthirten/vu-progression-api"
+  },
+  "apidoc": {
+    "Title": "VU Progression API",
+    "order": [
+      "Index",
+      "Auth",
+      "Players",
+      "Servers"
+    ]
   },
   "main": "api_server.js",
   "type": "module",
@@ -21,6 +30,7 @@
   "scripts": {
     "start": "node src/api_server.js",
     "dev": "nodemon src/api_server.js",
+    "doc": "apidoc-markdown -i src -o DOCUMENTATION.md",
     "add-server": "node src/add_server.js"
   },
   "dependencies": {
@@ -31,6 +41,7 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
+    "apidoc-markdown": "^7.3.2",
     "nodemon": "^3.1.10"
   }
 }

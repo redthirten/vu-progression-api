@@ -3,7 +3,7 @@
 > [!NOTE]
 > This repository is for development and the few who would like to host their own private master server.\
 > \
-> If you would like your VU server to be included in public global progression, please contact Red-Thirten (`red_thirten`) on the [VU Discord](https://discord.gg/dpJwaVZ) to obtain your token.
+> If you would like your VU server to be included in public global progression, please visit [this wiki page](https://github.com/redthirten/vu-progression-api/wiki/Public-Global-Progression).
 
 A global progression master API server for tracking and providing player progression in [Venice Unleashed (VU)](https://veniceunleashed.net/) servers via the [vu-progression](https://github.com/thysw95/vu-progression) mod.
 
@@ -17,7 +17,7 @@ Built with **Node.js**, **Express**, and **MySQL**, it provides structured endpo
 - 🗄️ MySQL-backed storage for progression data
 - ⚡ Connection pooling for efficient queries
 - 🛡️ Token & Server GUID based security — Only authorized servers can POST new data
-- 📜 Structured logging to file (rotated daily) for easy auditing
+- 📜 Structured logging to file (rotated daily)
 
 ## Requirements
 
@@ -76,11 +76,10 @@ http://localhost:3000
 
 ## Usage
 
-Clients of the API are intended to be individual VU servers running the vu-progression mod, but additional client opportunities are possible (like websites, bots, etc.). API endpoints will be detailed in the Wiki soon.
+Clients of the API are intended to be individual VU servers running the vu-progression mod, but additional client opportunities are possible (like websites, bots, etc.). API endpoints are detailed in the [Wiki](https://github.com/redthirten/vu-progression-api/wiki/API-Endpoints).
 
 ## Roadmap
 - [ ] More granular read/write endpoints for player progression
-- [ ] Make Wiki to detail endpoints
 - [ ] Add more tracked data (req. addl. mod development)
 - [ ] Administration endpoints for managing authorized servers / automated token generation
 
