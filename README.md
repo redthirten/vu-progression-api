@@ -92,31 +92,7 @@ npm install
 npm run dev
 ```
 
-Example call to update player data:
-```bash
-curl -X POST localhost:3000/players/[guid] \
-    -H "Content-Type: application/json" \
-    -H "X-API-TOKEN: [token]" \
-    -H "X-SERVER-GUID: [server_guid]" \
-    -d '{
-            "name": "Test",
-            "guid": 123,
-            "kills": 1,
-            "deaths": 2,
-            "total_level": 3,
-            "total_xp": 4,
-            "assault_level": 5,
-            "assault_xp": 6,
-            "engineer_level": 7,
-            "engineer_xp": 8,
-            "support_level": 9,
-            "support_xp": 10,
-            "recon_level": 11,
-            "recon_xp": 12,
-            "weapon_progression": "M16A4,5",
-            "vehicle_progression": "Jets,101"
-        }'
-```
+Example calls to the API are available in the [Wiki](https://github.com/redthirten/vu-progression-api/wiki/API-Endpoints).
 
 ## License
 GNU AGPLv3. See [LICENSE](./LICENSE) for details.

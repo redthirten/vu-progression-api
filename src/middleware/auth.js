@@ -22,36 +22,36 @@ export const authCheck = async (req, res, next) => {
     
     try {
         // Lookup server for provided token
-        const [rows] = await db.query(
-            "SELECT id, owner_name, last_ip, server_guid, enabled FROM authorized_servers WHERE token = ?",
+        const [[server]] = await db.query(
+            "SELECT id, owner_name, last_ip, server_guid, authorized FROM servers WHERE token = ?",
             [token]
         );
 
         // Authenticate
-        if (rows.length === 0) { // Token not in authorized_servers table
+        if (!server) { // Token not in servers table
             logger.warn(`Rejected query from ${req.ip} with token:\n\t${token}`);
             return res.status(403).json({ error: "Invalid API token" });
         }
-        if (rows[0].enabled !== 1) { // Token is disabled
-            logger.warn(`Rejected query from ${rows[0].owner_name} with disabled token:\n\t${token}`);
+        if (server.authorized !== 1) { // Token is disabled
+            logger.warn(`Rejected query from ${server.owner_name} with disabled token:\n\t${token}`);
             return res.status(403).json({ error: "Disabled API token" });
         }
-        if (rows[0].server_guid !== serverGuidSimple) { // Wrong server GUID for token
+        if (server.server_guid !== serverGuidSimple) { // Wrong server GUID for token
             logger.warn(`Rejected query from server (${serverGuidSimple}) with mismatching token:\n\t${token}`);
             return res.status(403).json({ error: "API token not authorized for use with this server" });
         }
 
         // Record server's IP address if outdated
-        if (rows[0].last_ip == null || rows[0].last_ip !== req.ip) {
+        if (server.last_ip == null || server.last_ip !== req.ip) {
             await db.query(
-                "UPDATE authorized_servers SET last_ip = ? WHERE id = ?",
-                [req.ip, rows[0].id]
+                "UPDATE servers SET last_ip = ? WHERE id = ?",
+                [req.ip, server.id]
             );
         }
 
         // Add server data to request and callback
-        req.ownerName = rows[0].owner_name;
-        req.serverGUID = rows[0].server_guid;
+        req.serverID = server.id;
+        req.ownerName = server.owner_name;
         next();
     } catch (err) {
         logger.error("Auth middleware error:", err);

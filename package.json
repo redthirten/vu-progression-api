@@ -1,6 +1,6 @@
 {
   "name": "vu-progression-api",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "External API server for collecting and providing global player progression data for Venice Unleashed's vu-progression mod. All responses and bodies are formatted as JSON.",
   "author": "David Wolfe (Red-Thirten)",
   "contributors": [],

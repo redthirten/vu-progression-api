@@ -18,10 +18,10 @@ export const serversRouter = express.Router();
  */
 serversRouter.get("/", async (req, res) => {
     try {
-        const [rows] = await db.query(
-            "SELECT COUNT(*) AS count FROM authorized_servers"
+        const [[count]] = await db.query(
+            "SELECT COUNT(*) AS count FROM servers"
         );
-        res.json(rows[0]);
+        res.json(count);
     } catch (err) {
         logger.error(err);
         return res.status(500).json({ error: "Database error" });

@@ -52,7 +52,7 @@ async function main() {
 
     // Check for existing server guid
     const [rows] = await connection.execute(
-        `SELECT * FROM authorized_servers WHERE server_guid = ?`,
+        `SELECT * FROM servers WHERE server_guid = ?`,
         [serverGuidSimple]
     );
     if (rows.length > 0) {
@@ -64,36 +64,34 @@ async function main() {
     
     // Generate secure token
     const token = generateToken();
-    const enabled = true;
     
     // Insert row
-    const [result] = await connection.execute(`
-        INSERT INTO authorized_servers (
-            owner_name,
-            owner_contact,
-            server_guid,
-            token,
-            enabled
-        )
-        VALUES (?, ?, ?, ?, ?)
-        `,
+    const sql = `
+        INSERT INTO servers
+        SET
+            owner_name = ?,
+            owner_contact = ?,
+            server_guid = ?,
+            token = ?
+    `;
+    const [result] = await connection.execute(
+        sql,
         [
             ownerName,
             ownerContact || null,
             serverGuidSimple,
-            token,
-            enabled
+            token
         ]
     );
     
     console.log("\n✅ New authorized server added:");
     console.log({
         id: result.insertId,
-        ownerName,
-        ownerContact: serverGuidSimple || null,
-        serverGuid,
+        owner_contact: ownerName,
+        owner_contact: ownerContact || null,
+        server_guid: serverGuidSimple,
         token,
-        enabled
+        authorized: true
     });
     
     await connection.end();
