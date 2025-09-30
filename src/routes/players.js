@@ -7,6 +7,10 @@ import { authCheck } from "#middleware/auth.js";
 // Base router for all /players routes
 export const playersRouter = express.Router();
 
+if (process.env.XP_WARN_AT) {
+    logger.debug(`XP gain warnings ENABLED at threshold of ${process.env.XP_WARN_AT} XP`);
+}
+
 /**
  * @api {get} /players Count Players
  * @apiDescription Returns player count.
@@ -67,7 +71,7 @@ playerRouter.use(async (req, res, next) => {
  * @apiSuccess {Number} id Player's API ID
  * @apiSuccess {String} name r_PlayerName
  * @apiSuccess {String} guid r_PlayerGuid
- * @apiSuccess {Datetime} created_at Datetime the player was added to the DB
+ * @apiSuccess {Datetime} created_at Date & time (UTC) the player was added to the DB
  * @apiSuccess {Number} last_server_id Server API ID the player last played on
  * 
  * @apiSuccess (Success 204) null Player GUID doesn't exist in DB
@@ -75,7 +79,6 @@ playerRouter.use(async (req, res, next) => {
 playerRouter.get("/", (req, res) => {
     // Check for non-existent player
     if (!req.player) {
-        logger.info(`${req.ownerName} (${req.serverID}) requested non-existent player info for GUID: ${req.params.guid}`);
         return res.status(204).json({}); // No Content
     }
 
@@ -93,7 +96,7 @@ playerRouter.get("/", (req, res) => {
  * @apiUse authCheck
  * @apiUse guid
  * 
- * @apiSuccess {Datetime} last_updated The last datetime the player's data was updated
+ * @apiSuccess {Datetime} last_updated The last date & time (UTC) the player's data was updated
  * @apiSuccess {Number} kills r_Kills
  * @apiSuccess {Number} deaths r_Deaths
  * @apiSuccess {Number} total_level r_PlayerLevel
@@ -370,6 +373,92 @@ playerRouter.post("/progression", async (req, res) => {
     } catch (err) {
         logger.error(err);
         res.status(500).json({ error: "Database error" });
+    }
+});
+
+/**
+ * @api {get} /players/:guid/games?limit=10 Get Player Games
+ * @apiDescription Returns list of player game history.
+ * @apiName GetPlayerGames
+ * @apiGroup Players
+ * @apiVersion 0.1.4
+ * 
+ * @apiUse authCheck
+ * @apiUse guid
+ * 
+ * @apiQuery {Number{1-100}} limit=10 Number of games to return
+ * 
+ * @apiSuccess {Object[]} games List of games, sorted by descending date
+ * @apiSuccess {Number} games.server_id API Server ID the game was played on
+ * @apiSuccess {Datetime} games.saved_at Date & time (UTC) the data was saved
+ * @apiSuccess {Number} games.kills Kills earned this game
+ * @apiSuccess {Number} games.deaths Deaths earned this game
+ * @apiSuccess {Number} games.total_level General levels earned this game
+ * @apiSuccess {Number} games.total_xp Total XP earned this game
+ * @apiSuccess {Number} games.assault_level Assault levels earned this game
+ * @apiSuccess {Number} games.assault_xp Assault XP earned this game
+ * @apiSuccess {Number} games.engineer_level Engineer levels earned this game
+ * @apiSuccess {Number} games.engineer_xp Engineer XP earned this game
+ * @apiSuccess {Number} games.support_level Support levels earned this game
+ * @apiSuccess {Number} games.support_xp Support XP earned this game
+ * @apiSuccess {Number} games.recon_level Recon levels earned this game
+ * @apiSuccess {Number} games.recon_xp Recon XP earned this game
+ * @apiSuccess {String} games.weapon_progression Weapon progress as of the end of the game
+ * @apiSuccess {String} games.vehicle_progression Vehicle progress as of the end of the game
+ */
+playerRouter.get("/games", async (req, res) => {
+    // Check for non-existent player
+    if (!req.player) {
+        return res.status(204).json({}); // No Content
+    }
+    
+    // Sanitize limit query param
+    let limit = req.query.limit;
+    if (!limit) {
+        limit = 10;
+    } else {
+        limit = parseInt(limit, 10);
+        // Check if the parsing failed (e.g., if the user entered `limit=abc`)
+        if (isNaN(limit)) {
+            limit = 10;
+        }
+    }
+    limit = Math.max(1, limit);
+    limit = Math.min(100, limit);
+
+    try {
+        const sql = `
+            SELECT
+                server_id,
+                saved_at,
+                kills,
+                deaths,
+                total_level,
+                total_xp,
+                assault_level,
+                assault_xp,
+                engineer_level,
+                engineer_xp,
+                support_level,
+                support_xp,
+                recon_level,
+                recon_xp,
+                weapon_progression,
+                vehicle_progression
+            FROM player_save_log
+            WHERE player_id = ?
+            ORDER BY saved_at DESC
+            LIMIT ?;
+        `;
+        const [games] = await db.query(
+            sql,
+            [req.player.id, limit]
+        );
+
+        res.json(games);
+    } catch (err) {
+        logger.error(err);
+        return res.status(500).json({ error: "Database error" });
     }
 });
 
