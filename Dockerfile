@@ -19,5 +19,9 @@ RUN npm install --production
 # Copy the rest of the source code
 COPY . .
 
+# Setup healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --start-interval=1s --retries=3 \
+    CMD ["node", "healthcheck.js"]
+
 # Start the app
 CMD ["npm", "start"]
