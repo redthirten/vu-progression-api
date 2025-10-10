@@ -16,20 +16,35 @@ const pool = mysql.createPool({
 export default pool;
 
 const initDB = async () => {
-    logger.debug(`Logging into database at '${process.env.DB_HOST + ":" + (process.env.DB_PORT || 3306)}'...`)
+    logger.debug(`Initializing database at '${process.env.DB_HOST + ":" + (process.env.DB_PORT || 3306)}'...`)
     // Ensure tables exist
     try {
         await pool.query(
             `CREATE TABLE IF NOT EXISTS servers (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 owner_name TINYTEXT NOT NULL,
-                owner_contact TINYTEXT DEFAULT NULL,
+                owner_contact TINYTEXT,
                 created_on DATE DEFAULT CURRENT_DATE,
                 last_auth_check DATETIME DEFAULT NULL,
                 last_ip VARCHAR(45) DEFAULT NULL,
                 server_guid CHAR(32) NOT NULL UNIQUE,
                 token CHAR(64) NOT NULL UNIQUE,
                 authorized BOOLEAN NOT NULL DEFAULT TRUE
+            )`
+        );
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS server_round_log (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                server_id INT,
+                saved_at DATETIME DEFAULT NULL
+                    ON UPDATE CURRENT_TIMESTAMP,
+                server_name TINYTEXT,
+                gamemode TINYTEXT,
+                map TINYTEXT,
+                num_players INT DEFAULT NULL,
+                winning_team_id INT DEFAULT NULL,
+                duration FLOAT DEFAULT NULL,
+                FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE SET NULL
             )`
         );
         await pool.query(
@@ -58,8 +73,8 @@ const initDB = async () => {
                 support_xp INT NOT NULL DEFAULT 0,
                 recon_level INT NOT NULL DEFAULT 0,
                 recon_xp INT NOT NULL DEFAULT 0,
-                weapon_progression TEXT NOT NULL DEFAULT '',
-                vehicle_progression TEXT NOT NULL DEFAULT '',
+                weapon_progression TEXT NOT NULL,
+                vehicle_progression TEXT NOT NULL,
                 FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
             )`
         );
@@ -67,7 +82,9 @@ const initDB = async () => {
             `CREATE TABLE IF NOT EXISTS player_save_log (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 player_id INT NOT NULL,
-                server_id INT,
+                server_round_id INT NOT NULL,
+                team_id INT NOT NULL,
+                squad_id INT NOT NULL,
                 saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 kills INT NOT NULL DEFAULT 0,
                 deaths INT NOT NULL DEFAULT 0,
@@ -81,10 +98,10 @@ const initDB = async () => {
                 support_xp INT NOT NULL DEFAULT 0,
                 recon_level INT NOT NULL DEFAULT 0,
                 recon_xp INT NOT NULL DEFAULT 0,
-                weapon_progression TEXT NOT NULL DEFAULT '',
-                vehicle_progression TEXT NOT NULL DEFAULT '',
+                weapon_progression TEXT NOT NULL,
+                vehicle_progression TEXT NOT NULL,
                 FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
-                FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE SET NULL
+                FOREIGN KEY (server_round_id) REFERENCES server_round_log(id) ON DELETE CASCADE
             )`
         );
     } catch (err) {

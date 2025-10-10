@@ -2,9 +2,11 @@ import db from "#db";
 import logger from '#utils/logger.js';
 
 
-// Middleware to check if client is an authorized server
 /**
  * @apiDefine authCheck Middleware to check if client is an authorized server
+ * Request data added if authorized:
+ * - {Number} req.serverID The API ID of the client (the "server") making the request
+ * - {String} req.ownerName The server owner's name (for logging)
  * 
  * @apiHeader (Auth) {String} X-API-TOKEN [Required] API Token
  * @apiHeader (Auth) {String} X-SERVER-GUID [Required] Server GUID
@@ -13,6 +15,14 @@ import logger from '#utils/logger.js';
  * @apiError (Error 403) {String} error API token denied
  */
 export const authCheck = async (req, res, next) => {
+    if (process.env.NODE_ENV === "development"
+        && process.env.SKIP_AUTH?.toLowerCase() === "true"
+    ) {
+        req.serverID = 1;
+        req.ownerName = "Dev";
+        return next();
+    }
+
     const token = req.header("X-API-TOKEN");
     const serverGuid = req.header("X-SERVER-GUID");
     if (!token || !serverGuid) {
