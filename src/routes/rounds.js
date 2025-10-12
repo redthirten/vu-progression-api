@@ -22,7 +22,7 @@ export const roundsRouter = express.Router();
  * @apiBody {String} gamemode The name of the gamemode
  * @apiBody {String} map The name of the map
  * 
- * @apiSuccess {Number} id New round's API ID
+ * @apiSuccess (Success 201) {Number} id New round's API ID
  * 
  * @apiError (Error 500) {String} error Database error
  */
@@ -45,7 +45,7 @@ roundsRouter.post("/", authCheck, async (req, res) => {
                 req.body.map
             ]
         );
-        res.json({ id: result.insertId });
+        res.status(201).json({ id: result.insertId });
     } catch (err) {
         logger.error(err);
         return res.status(500).json({ error: "Database error" });

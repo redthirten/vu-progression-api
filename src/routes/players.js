@@ -170,8 +170,8 @@ playerRouter.get("/progression", async (req, res) => {
  * @apiBody {String} weapon_progression r_WeaponProgressList
  * @apiBody {String} vehicle_progression r_VehicleProgressList
  * 
- * @apiSuccess {Boolean} success Player progression was successfully updated
- * @apiSuccess {Boolean} newPlayer Data was added to the DB as a new player
+ * @apiSuccess (Success 200) {Number} id Existing player's API ID
+ * @apiSuccess (Success 201) {Number} id New player's API ID
  * 
  * @apiError (Error 400) {String} error Missing or outdated body JSON data
  * 
@@ -318,10 +318,7 @@ playerRouter.post("/progression", async (req, res) => {
             );
 
             logger.info(`${req.ownerName} (${req.serverID}) updated player progression for: ${req.player.name}`);
-            res.json({
-                success: true,
-                newPlayer: false
-            });
+            res.json({ id: req.player.id });
         }
         else { // New player -- Add
             // Add new player info
@@ -377,10 +374,7 @@ playerRouter.post("/progression", async (req, res) => {
             await db.query(saveLogSQL, vars);
 
             logger.info(`${req.ownerName} (${req.serverID}) added player progression for: ${req.body.name}`);
-            res.json({
-                success: true,
-                newPlayer: true
-            });
+            res.status(201).json({ id: result.insertId });
         }
     } catch (err) {
         logger.error(err);
