@@ -24,7 +24,7 @@ const initDB = async () => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 owner_name TINYTEXT NOT NULL,
                 owner_contact TINYTEXT,
-                created_on DATE DEFAULT (CURRENT_DATE),
+                created_on DATE DEFAULT CURRENT_TIMESTAMP,
                 last_auth_check DATETIME DEFAULT NULL,
                 last_ip VARCHAR(45) DEFAULT NULL,
                 server_guid CHAR(32) NOT NULL UNIQUE,
