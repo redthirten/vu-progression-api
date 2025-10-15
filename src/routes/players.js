@@ -1,8 +1,9 @@
 import express from "express";
 import logger from '#utils/logger.js';
-import { sanitizeIntQueries } from '#middleware/querySanitizer.js';
 import db from "#db";
 import { authCheck } from "#middleware/auth.js";
+import { requireBodyData } from "#middleware/requireBodyData.js";
+import { sanitizeIntQueries } from '#middleware/querySanitizer.js';
 
 
 // Base router for all /players routes
@@ -58,8 +59,10 @@ playerRouter.use(async (req, res, next) => {
         return res.status(500).json({ error: "Database error" });
     }
 
-    // Check for non-existent player
-    if (!req.player) {
+    // Check for non-existent player (except for `POST /players/:guid/progression`)
+    if (!req.player
+        && !(req.method === "POST" && req.path === "/progression")
+    ) {
         logger.debug(`${req.ownerName} (${req.serverID}) requested data for non-existent player with GUID: ${req.params.guid}`);
         return res.status(204).json({}); // No Content
     }
@@ -100,6 +103,7 @@ playerRouter.get("/", (req, res) => {
  * @apiUse authCheck
  * @apiUse playerGUID
  * 
+ * @apiSuccess {Number} player_id Player's API ID
  * @apiSuccess {Datetime} last_updated The last date & time (UTC) the player's data was updated
  * @apiSuccess {Number} kills r_Kills
  * @apiSuccess {Number} deaths r_Deaths
@@ -148,6 +152,7 @@ playerRouter.get("/progression", async (req, res) => {
  * 
  * @apiUse authCheck
  * @apiUse playerGUID
+ * @apiUse requireBodyData
  * 
  * @apiHeader (Content) {String} Content-Type `application/json`
  * 
@@ -173,7 +178,7 @@ playerRouter.get("/progression", async (req, res) => {
  * @apiSuccess (Success 200) {Number} id Existing player's API ID
  * @apiSuccess (Success 201) {Number} id New player's API ID
  * 
- * @apiError (Error 400) {String} error Missing or outdated body JSON data
+ * @apiError (Error 409) {String} error Outdated progression data
  * 
  * @apiExample {curl} Example usage:
  * curl -X POST localhost:3000/players/[player_guid]/progression \
@@ -201,79 +206,175 @@ playerRouter.get("/progression", async (req, res) => {
  *             "vehicle_progression": "Jets,101"
  *         }'
  */
-playerRouter.post("/progression", async (req, res) => {
-    if (!req.body || (!req.player && !req.body.name)) {
-        return res.status(400).json({ error: "Missing body JSON data" });
-    }
+playerRouter.post(
+    "/progression",
+    requireBodyData(
+        'name',
+        'server_round_id',
+        'team_id',
+        'squad_id',
+        'kills',
+        'deaths',
+        'total_level',
+        'total_xp',
+        'assault_level',
+        'assault_xp',
+        'engineer_level',
+        'engineer_xp',
+        'support_level',
+        'support_xp',
+        'recon_level',
+        'recon_xp',
+        'weapon_progression',
+        'vehicle_progression'
+    ),
+    async (req, res) => {
+        if (!req.body || (!req.player && !req.body.name)) {
+            return res.status(400).json({ error: "Missing body JSON data" });
+        }
 
-    const saveLogSQL = `
-        INSERT INTO player_save_log
-        SET
-            player_id = ?,
-            server_round_id = ?,
-            team_id = ?,
-            squad_id = ?,
-            kills = ?,
-            deaths = ?,
-            total_level = ?,
-            total_xp = ?,
-            assault_level = ?,
-            assault_xp = ?,
-            engineer_level = ?,
-            engineer_xp = ?,
-            support_level = ?,
-            support_xp = ?,
-            recon_level = ?,
-            recon_xp = ?,
-            weapon_progression = ?,
-            vehicle_progression = ?
-    `;
-    
-    try {
-        if (req.player) { // Player exists -- Update
-            // Get current progression data
-            const [[curProgData]] = await db.query(
-                "SELECT * FROM player_progression WHERE player_id = ?",
-                [req.player.id]
-            );
-            // Check for outdated data
-            if (curProgData.total_xp > req.body.total_xp) {
-                logger.warn(`${req.ownerName} (${req.serverID}) tried updating ${req.player.name} with old data. Skipping.`);
-                return res.status(400).json({ error: "Outdated data" });
+        const saveLogSQL = `
+            INSERT INTO player_save_log
+            SET
+                player_id = ?,
+                server_round_id = ?,
+                team_id = ?,
+                squad_id = ?,
+                kills = ?,
+                deaths = ?,
+                total_level = ?,
+                total_xp = ?,
+                assault_level = ?,
+                assault_xp = ?,
+                engineer_level = ?,
+                engineer_xp = ?,
+                support_level = ?,
+                support_xp = ?,
+                recon_level = ?,
+                recon_xp = ?,
+                weapon_progression = ?,
+                vehicle_progression = ?
+        `;
+        
+        try {
+            if (req.player) { // Player exists -- Update
+                // Get current progression data
+                const [[curProgData]] = await db.query(
+                    "SELECT * FROM player_progression WHERE player_id = ?",
+                    [req.player.id]
+                );
+                // Check for outdated data
+                if (curProgData.total_xp > req.body.total_xp) {
+                    logger.warn(`${req.ownerName} (${req.serverID}) tried updating ${req.player.name} with old data. Skipping.`);
+                    return res.status(400).json({ error: "Outdated progression data" });
+                }
+                // Check for sus score increase
+                const totalXpGained = req.body.total_xp - curProgData.total_xp;
+                if (totalXpGained >= process.env.XP_WARN_AT) {
+                    logger.warn(`${req.ownerName} (${req.serverID}) is adding ${totalXpGained} total XP to: ${req.player.name}`);
+                }
+                // Update last server ID
+                await db.query(
+                    "UPDATE players SET last_server_id = ? WHERE id = ?",
+                    [req.serverID, req.player.id]
+                );
+                // Update player progression data
+                const sql = `
+                    UPDATE player_progression
+                    SET
+                        kills = ?,
+                        deaths = ?,
+                        total_level = ?,
+                        total_xp = ?,
+                        assault_level = ?,
+                        assault_xp = ?,
+                        engineer_level = ?,
+                        engineer_xp = ?,
+                        support_level = ?,
+                        support_xp = ?,
+                        recon_level = ?,
+                        recon_xp = ?,
+                        weapon_progression = ?,
+                        vehicle_progression = ?
+                    WHERE player_id = ?
+                `;
+                await db.query(
+                    sql,
+                    [
+                        req.body.kills,
+                        req.body.deaths,
+                        req.body.total_level,
+                        req.body.total_xp,
+                        req.body.assault_level,
+                        req.body.assault_xp,
+                        req.body.engineer_level,
+                        req.body.engineer_xp,
+                        req.body.support_level,
+                        req.body.support_xp,
+                        req.body.recon_level,
+                        req.body.recon_xp,
+                        req.body.weapon_progression,
+                        req.body.vehicle_progression,
+                        req.player.id
+                    ]
+                );
+
+                // Add new save log
+                await db.query(
+                    saveLogSQL,
+                    [
+                        req.player.id,
+                        req.body.server_round_id,
+                        req.body.team_id,
+                        req.body.squad_id,
+                        req.body.kills - curProgData.kills,
+                        req.body.deaths - curProgData.deaths,
+                        req.body.total_level - curProgData.total_level,
+                        req.body.total_xp - curProgData.total_xp,
+                        req.body.assault_level - curProgData.assault_level,
+                        req.body.assault_xp - curProgData.assault_xp,
+                        req.body.engineer_level - curProgData.engineer_level,
+                        req.body.engineer_xp - curProgData.engineer_xp,
+                        req.body.support_level - curProgData.support_level,
+                        req.body.support_xp - curProgData.support_xp,
+                        req.body.recon_level - curProgData.recon_level,
+                        req.body.recon_xp - curProgData.recon_xp,
+                        req.body.weapon_progression,
+                        req.body.vehicle_progression
+                    ]
+                );
+
+                logger.info(`${req.ownerName} (${req.serverID}) updated player progression for: ${req.player.name}`);
+                res.json({ id: req.player.id });
             }
-            // Check for sus score increase
-            const totalXpGained = req.body.total_xp - curProgData.total_xp;
-            if (totalXpGained >= process.env.XP_WARN_AT) {
-                logger.warn(`${req.ownerName} (${req.serverID}) is adding ${totalXpGained} total XP to: ${req.player.name}`);
-            }
-            // Update last server ID
-            await db.query(
-                "UPDATE players SET last_server_id = ? WHERE id = ?",
-                [req.serverID, req.player.id]
-            );
-            // Update player progression data
-            const sql = `
-                UPDATE player_progression
-                SET
-                    kills = ?,
-                    deaths = ?,
-                    total_level = ?,
-                    total_xp = ?,
-                    assault_level = ?,
-                    assault_xp = ?,
-                    engineer_level = ?,
-                    engineer_xp = ?,
-                    support_level = ?,
-                    support_xp = ?,
-                    recon_level = ?,
-                    recon_xp = ?,
-                    weapon_progression = ?,
-                    vehicle_progression = ?
-                WHERE player_id = ?
-            `;
-            await db.query(
-                sql,
-                [
+            else { // New player -- Add
+                // Add new player info
+                const [result] = await db.query(
+                    "INSERT INTO players SET name = ?, guid = ?, last_server_id = ?",
+                    [req.body.name, req.params.guid, req.serverID]
+                );
+                // Add player progression data
+                const sql = `
+                    INSERT INTO player_progression
+                    SET
+                        player_id = ?,
+                        kills = ?,
+                        deaths = ?,
+                        total_level = ?,
+                        total_xp = ?,
+                        assault_level = ?,
+                        assault_xp = ?,
+                        engineer_level = ?,
+                        engineer_xp = ?,
+                        support_level = ?,
+                        support_xp = ?,
+                        recon_level = ?,
+                        recon_xp = ?,
+                        weapon_progression = ?,
+                        vehicle_progression = ?
+                `;
+                let vars = [
+                    result.insertId,
                     req.body.kills,
                     req.body.deaths,
                     req.body.total_level,
@@ -287,100 +388,27 @@ playerRouter.post("/progression", async (req, res) => {
                     req.body.recon_level,
                     req.body.recon_xp,
                     req.body.weapon_progression,
-                    req.body.vehicle_progression,
-                    req.player.id
-                ]
-            );
-
-            // Add new save log
-            await db.query(
-                saveLogSQL,
-                [
-                    req.player.id,
+                    req.body.vehicle_progression
+                ];
+                await db.query(sql, vars);
+                
+                // Add save log
+                vars.splice(1, 0,
                     req.body.server_round_id,
                     req.body.team_id,
-                    req.body.squad_id,
-                    req.body.kills - curProgData.kills,
-                    req.body.deaths - curProgData.deaths,
-                    req.body.total_level - curProgData.total_level,
-                    req.body.total_xp - curProgData.total_xp,
-                    req.body.assault_level - curProgData.assault_level,
-                    req.body.assault_xp - curProgData.assault_xp,
-                    req.body.engineer_level - curProgData.engineer_level,
-                    req.body.engineer_xp - curProgData.engineer_xp,
-                    req.body.support_level - curProgData.support_level,
-                    req.body.support_xp - curProgData.support_xp,
-                    req.body.recon_level - curProgData.recon_level,
-                    req.body.recon_xp - curProgData.recon_xp,
-                    req.body.weapon_progression,
-                    req.body.vehicle_progression
-                ]
-            );
+                    req.body.squad_id
+                );
+                await db.query(saveLogSQL, vars);
 
-            logger.info(`${req.ownerName} (${req.serverID}) updated player progression for: ${req.player.name}`);
-            res.json({ id: req.player.id });
+                logger.info(`${req.ownerName} (${req.serverID}) added player progression for: ${req.body.name}`);
+                res.status(201).json({ id: result.insertId });
+            }
+        } catch (err) {
+            logger.error(err);
+            res.status(500).json({ error: "Database error" });
         }
-        else { // New player -- Add
-            // Add new player info
-            const [result] = await db.query(
-                "INSERT INTO players SET name = ?, guid = ?, last_server_id = ?",
-                [req.body.name, req.params.guid, req.serverID]
-            );
-            // Add player progression data
-            const sql = `
-                INSERT INTO player_progression
-                SET
-                    player_id = ?,
-                    kills = ?,
-                    deaths = ?,
-                    total_level = ?,
-                    total_xp = ?,
-                    assault_level = ?,
-                    assault_xp = ?,
-                    engineer_level = ?,
-                    engineer_xp = ?,
-                    support_level = ?,
-                    support_xp = ?,
-                    recon_level = ?,
-                    recon_xp = ?,
-                    weapon_progression = ?,
-                    vehicle_progression = ?
-            `;
-            let vars = [
-                result.insertId,
-                req.body.kills,
-                req.body.deaths,
-                req.body.total_level,
-                req.body.total_xp,
-                req.body.assault_level,
-                req.body.assault_xp,
-                req.body.engineer_level,
-                req.body.engineer_xp,
-                req.body.support_level,
-                req.body.support_xp,
-                req.body.recon_level,
-                req.body.recon_xp,
-                req.body.weapon_progression,
-                req.body.vehicle_progression
-            ];
-            await db.query(sql, vars);
-            
-            // Add save log
-            vars.splice(1, 0,
-                req.body.server_round_id,
-                req.body.team_id,
-                req.body.squad_id
-            );
-            await db.query(saveLogSQL, vars);
-
-            logger.info(`${req.ownerName} (${req.serverID}) added player progression for: ${req.body.name}`);
-            res.status(201).json({ id: result.insertId });
-        }
-    } catch (err) {
-        logger.error(err);
-        res.status(500).json({ error: "Database error" });
     }
-});
+);
 
 /**
  * @api {get} /players/:guid/rounds?limit=10&offset=0 Get Player Rounds

@@ -1,6 +1,5 @@
 // Custom query sanitization middleware factories
 
-import logger from '#utils/logger.js';
 /**
 * Express middleware that sanitizes specified query keys by parsing their mapped values as integers,
 * applying a default value if missing or NaN, and clamping them between optional min and max values.
@@ -8,7 +7,8 @@ import logger from '#utils/logger.js';
 *
 * @param {Object<string, {default: number, min?: number, max?: number}>} config
 *   An object mapping query keys to their sanitization rules
-* @returns {import('express').RequestHandler} An Express middleware function
+* @returns {import('express').RequestHandler}
+*   An Express middleware function
 */
 export function sanitizeIntQueries(config) {
     return (req, res, next) => {

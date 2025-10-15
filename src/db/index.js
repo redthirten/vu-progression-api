@@ -48,6 +48,16 @@ const initDB = async () => {
             )`
         );
         await pool.query(
+            `INSERT IGNORE INTO server_round_log
+             SET
+                id = -1,
+                server_id = NULL,
+                server_name = "Unknown",
+                gamemode = "Unknown",
+                map = "Unknown"
+            `
+        );
+        await pool.query(
             `CREATE TABLE IF NOT EXISTS players (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name TINYTEXT NOT NULL,
