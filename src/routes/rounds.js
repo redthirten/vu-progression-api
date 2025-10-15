@@ -33,7 +33,6 @@ roundsRouter.post(
     authCheck,
     requireBodyData('server_name', 'gamemode', 'map'),
     async (req, res) => {
-        throw new Error("TEST ERROR");
         try {
             const sql = `
                 INSERT INTO server_round_log
