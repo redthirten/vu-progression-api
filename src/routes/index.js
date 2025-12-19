@@ -1,14 +1,13 @@
+const MIN_MOD_VERSION = {
+    Major: 3,
+    Minor: 0,
+    Patch: 0
+};
+
 import express from "express";
 import logger from '#utils/logger.js';
 import { createRequire } from "module";
 
-const MIN_MOD_VERSION = {
-    Major: 2,
-    Minor: 1,
-    Patch: 1
-};
-const XP_MULT = parseFloat(process.env.XP_MULT) || 1.0;
-logger.debug(`XP multiplier set to ${XP_MULT}`);
 
 // Get basic app info
 const require = createRequire(import.meta.url);
@@ -19,6 +18,10 @@ const {
     repository: appRepo
 } = require("#package");
 logger.debug(`VU Progression API (v${appVer})`);
+
+// Get XP multiplier env var, if set
+const XP_MULT = parseFloat(process.env.XP_MULT) || 1.0;
+logger.debug(`XP multiplier set to ${XP_MULT}`);
 
 
 export const rootRouter = express.Router();
@@ -46,11 +49,7 @@ rootRouter.get("/", (req, res) => {
         description: appDesc,
         version: appVer,
         github: appRepo.url,
-        minModVerSupported: {
-            Major: MIN_MOD_VERSION.Major,
-            Minor: MIN_MOD_VERSION.Minor,
-            Patch: MIN_MOD_VERSION.Patch
-        },
+        minModVerSupported: MIN_MOD_VERSION,
         xpMultiplier: XP_MULT
     });
 });

@@ -1,6 +1,6 @@
 /**
 * VU Progression API
-* Copyright (C) 2025  David Wolfe (Red-Thirten)
+* Copyright (C) 2026  David Wolfe (Red-Thirten)
 * 
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as published
@@ -18,8 +18,8 @@
 
 import 'dotenv/config';
 import express from 'express';
-import db from "#db";
 import logger from '#utils/logger.js';
+import db from "#db";
 import { errorHandler } from "#middleware/errorHandler.js";
 import { rootRouter } from "#routes/index.js";
 import { authRouter } from "#routes/auth.js";
