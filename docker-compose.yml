@@ -1,6 +1,6 @@
 services:
   api:
-    image: ghcr.io/redthirten/vu-progression-api:main
+    image: ghcr.io/redthirten/vu-progression-api:latest
     container_name: vu-progression-api
     restart: unless-stopped
     env_file: .env # Uses .env file on host; see .env.example in project for values
