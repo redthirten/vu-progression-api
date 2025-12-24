@@ -25,9 +25,8 @@ services:
     #   - "traefik.http.services.vu-progression.loadbalancer.server.port=3000"
 
   db:
-    # Version locked to ensure DB stability.
-    # Minor updates are okay, but major updates may require `mariadb-upgrade` to be manually run.
-    image: mariadb:12.1.2
+    # Lock version because MariaDB is not guaranteed to be forward compatible
+    image: mariadb:12.0.2
     container_name: vu-progression-db
     restart: unless-stopped
     networks:
