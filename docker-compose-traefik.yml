@@ -7,9 +7,8 @@ services:
         condition: service_healthy
         restart: true
     networks:
+      - proxy
       - nw
-    ports:
-      - 3000:3000 # host:container
     volumes:
       - /path/to/save/logs:/usr/src/app/logs # Optional
     environment:
@@ -24,6 +23,13 @@ services:
       DB_NAME: ${DB_NAME}
       XP_MULT: ${XP_MULT}
       XP_WARN_AT: ${XP_WARN_AT}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vu-progression-secure.entrypoints=https"
+      - "traefik.http.routers.vu-progression-secure.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.vu-progression-secure.tls=true"
+      - "traefik.http.routers.vu-progression-secure.service=vu-progression"
+      - "traefik.http.services.vu-progression.loadbalancer.server.port=${PORT}"
 
   db:
     # Version locked to ensure DB stability.
@@ -51,4 +57,6 @@ volumes:
   db:
 
 networks:
+  proxy:
+    external: true
   nw:
