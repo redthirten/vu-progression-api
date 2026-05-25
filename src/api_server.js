@@ -19,7 +19,7 @@
 import 'dotenv/config';
 import express from 'express';
 import logger from '#utils/logger.js';
-import db from "#db";
+import db, { initDB } from "#db";
 import { errorHandler } from "#middleware/errorHandler.js";
 import { rootRouter } from "#routes/index.js";
 import { authRouter } from "#routes/auth.js";
@@ -28,6 +28,15 @@ import { serversRouter } from "#routes/servers.js";
 import { roundsRouter } from "#routes/rounds.js";
 
 
+// -- Initialize Database --
+try {
+    await initDB();
+} catch (err) {
+    logger.error('Failed to initialize DB:', err);
+    process.exit(1); // stop app if DB can't be initialized
+}
+
+// -- Setup Express App --
 const app = express();
 
 // Global middleware
