@@ -34,9 +34,9 @@
     "add-server": "node src/add_server.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.1",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0",
-    "mysql2": "^3.14.3",
+    "mysql2": "^3.22.5",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
