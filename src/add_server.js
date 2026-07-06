@@ -84,10 +84,10 @@ async function main() {
         ]
     );
     
-    console.log("\n✅ New authorized server added:");
+    console.log("\n✅  New authorized server added:");
     console.log({
         id: result.insertId,
-        owner_contact: ownerName,
+        owner_name: ownerName,
         owner_contact: ownerContact || null,
         server_guid: serverGuidSimple,
         token,
