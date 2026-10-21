@@ -36,12 +36,12 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
-    "mysql2": "^3.22.5",
+    "mysql2": "^3.23.1",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "apidoc-markdown": "^7.3.2",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.14"
   }
 }
